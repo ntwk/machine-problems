@@ -82,7 +82,7 @@ head db '-ID-- '
 
 Hdr2 db 'Emp_ID    OT_Pay   Total_Pay',CR,LF,'$'
 
-enter db CR,LF,'$'              ;   Mimics hitting the enter key
+entr  db CR,LF,'$'              ;   Mimics hitting the enter key
 space db SPA,SPA,SPA,'$'        ;   Types 3 Spaces
 
 Menu  db CR,LF,'What info do you want?',CR,LF
@@ -151,7 +151,7 @@ PrintSpace ENDP
 
 ;  Procedure to print CR,LF
 Ent PROC NEAR
-        mov     dx, OFFSET enter
+        mov     dx, OFFSET entr
         call    dspmsg
         ret
 Ent ENDP
