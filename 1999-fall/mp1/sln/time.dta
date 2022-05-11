@@ -1,0 +1,27 @@
+; Format: id,'$',Wage,OTr,Sun,Mon,Tue,Wed,Thu,Fri,Sat,OT_pay,Total_pay
+; Offset: id    0-3
+;         '$'   4
+;        Wage   5
+;     OT_rate   6
+;         Sun   7
+;     Mon-Fri   8-12
+;         Sat   13
+;      Ot_pay   14,15
+;   Total_pay   16,17
+;   Packet length =  18 bytes long
+
+time db 'GARP','$',24,2,0,5,5,5,5,5,4, 0,0,0,0
+     db 'CARP','$',32,4,8,8,8,8,8,8,0, 0,0,0,0
+     db 'HARP','$',16,4,2,8,8,8,8,8,7, 0,0,0,0
+     db 'TARP','$',25,3,8,8,8,8,8,8,2, 0,0,0,0
+     db 'QARP','$',10,8,8,8,8,8,8,8,8, 0,0,0,0
+     db 'YARP','$',64,5,8,8,8,8,8,8,0, 0,0,0,0
+     db 'RARP','$',15,2,6,8,8,8,8,8,7, 0,0,0,0
+     db 'SARP','$',10,4,8,8,8,8,8,8,2, 0,0,0,0
+     db 'MARP','$',100,8,8,8,8,8,8,8,8, 0,0,0,0
+     db 'OARP','$',77,1,0,8,8,8,8,8,0, 0,0,0,0
+
+numrec dw 10
+
+PUBLIC time
+PUBLIC numrec
