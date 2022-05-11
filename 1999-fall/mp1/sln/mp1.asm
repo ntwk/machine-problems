@@ -13,14 +13,14 @@ COMMENT #
         LF      EQU     0Ah
         SPA     EQU     20h
         RECLEN  EQU     18      ; Length of each record is constant
-                 
+
 
 ;********** SECTION 2:  Declare External Procedures *****************
 
 ;       Functions in LIB291.LIB
 ;       These functions are free to be used by you.
 
-        extrn binasc:near, dspmsg:near, dosxit:near, dspout:near 
+        extrn binasc:near, dspmsg:near, dosxit:near, dspout:near
         extrn kbdine:near
 
         ;       Complete descriptions of the LIB291 functions can be
@@ -38,7 +38,7 @@ COMMENT #
         extrn  LIBPrintID:near
         extrn  LIBHandleA:near
         extrn  LIBHandleB:near
-                
+
 
 ;********* SECTION 3:  Define Stack Segment **************************
 
@@ -62,11 +62,11 @@ cseg segment public 'CODE'
 ;         Totp:         2-byte unsigned integer                 = 2 bytes
 ;
 ;       ID,'$',Wage,OT_rate,Sun,Mon,Tue,Wed,Thu,Fri,Sat,OT_pay,Total_pay
-   
+
 INCLUDE time.dta
 
 PUBLIC time
-PUBLIC numrec                                         
+PUBLIC numrec
 PUBLIC PrintT
 PUBLIC PrintID
 
@@ -99,17 +99,17 @@ buff  db 7 dup(?)               ;   Temporary buffer used by BINASC lib291 call
 ;********** SECTION 6:  Main Procedure ****************************
 
 main    proc    far
-        mov     ax,cseg                 
+        mov     ax,cseg
         mov     ds,ax                   ; Initialize ds = cs
 
-        call    CalcOT    
+        call    CalcOT
 
-        call    CalcTP     
+        call    CalcTP
 
 Refresh:
         call    PrintHdr
 
-        call    PrintRec 
+        call    PrintRec
 
         call    Ent             ;  Prints CR and LF to screen
 
@@ -124,20 +124,20 @@ Display:
 
         cmp     al,'a'
         jne     NOTa
-        call    HandleA      
+        call    HandleA
         jmp    Display
 NOTa:   cmp     al,'b'
         jne     NOTab
         call    HandleB
         jmp     Display
-NOTab:   
+NOTab:
         cmp     al,'c'
         jne     InvalidIO
         jmp     Refresh
 InvalidIO:
         call    InvalidInput
         call    Ent
-        jmp     Display        
+        jmp     Display
 
 Exit:   call mp1xit
 main    endp
@@ -202,13 +202,13 @@ PrintL:
         call    PrintD
         call    PrintT
         call    Ent
-    
-        add     bp,RECLEN    
+
+        add     bp,RECLEN
         inc     di
         cmp     di,WORD PTR [numrec]
-        jnz     PrintL        
+        jnz     PrintL
         ret
-PrintRec        ENDP        
+PrintRec        ENDP
 
 ;******************************************************************
 ;***************  You need to code these functions ****************
