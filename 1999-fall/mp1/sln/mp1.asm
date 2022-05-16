@@ -214,7 +214,26 @@ PrintRec        ENDP
 ;***************  You need to code these functions ****************
 ;******************************************************************
 CalcOT  PROC    NEAR
-        call    LIBCalcOT  ;  Comment this function out; Insert your code here.
+        push    ax
+        push    bx
+        push    cx
+        push    dx
+        mov     bx, OFFSET time
+        mov     cx, numrec
+NextRec:
+        mov     al, [bx+7]              ; Sunday hours
+        add     al, [bx+13]             ; Saturday hours
+        mul     BYTE PTR [bx+5]         ; Wage
+        mov     dl, [bx+6]              ; make OT_rate 16-bit
+        xor     dh,dh
+        mul     dx                      ; OT_rate
+        mov     [bx+14], ax             ; store result
+        add     bx,18                   ; next element
+        loop    NextRec
+        pop     dx
+        pop     cx
+        pop     bx
+        pop     ax
         ret
 CalcOT          ENDP
 
