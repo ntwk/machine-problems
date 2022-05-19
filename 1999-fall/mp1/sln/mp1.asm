@@ -238,7 +238,29 @@ NextRec:
 CalcOT          ENDP
 
 CalcTP  PROC    NEAR
-        call    LIBCalcTP  ;  Comment this function out; Insert your code here.
+        push    ax
+        push    bx
+        push    cx
+        push    dx
+        mov     bx, OFFSET time
+        mov     cx, numrec
+NextRec:
+        mov     si, 8                   ; index to Monday
+        mov     al, [bx][si]            ; move Monday hrs to al
+NextDay:
+        inc     si                      ; sum other weekday hrs with Monday hrs
+        add     al, [bx][si]            ; .
+        cmp     si, 12                  ; .
+        jnz     NextDay
+        mul     BYTE PTR [bx+5]         ; Wage * regular hrs
+        add     ax, WORD PTR [bx+14]    ; add OT pay
+        mov     [bx+16], ax             ; store result
+        add     bx, 18
+        loop    NextRec
+        pop     dx
+        pop     cx
+        pop     bx
+        pop     ax
         ret
 CalcTP          ENDP
 
