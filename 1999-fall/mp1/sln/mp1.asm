@@ -276,7 +276,20 @@ HandleB PROC    NEAR
 HandleB         ENDP
 
 PrintID PROC    NEAR
-        call    LIBPrintID     ;   Comment this out.  Insert your function here.
+        push    ax
+        push    bx
+        push    dx
+        push    di
+        mov     ax, 18
+        mul     di
+        mov     di, ax
+        lea     dx, time[di]
+        call    dspmsg
+        call    PrintSpace
+        pop     di
+        pop     dx
+        pop     bx
+        pop     ax
         ret
 PrintID         ENDP
 
