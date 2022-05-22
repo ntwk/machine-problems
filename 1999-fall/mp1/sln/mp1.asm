@@ -294,7 +294,31 @@ PrintID PROC    NEAR
 PrintID         ENDP
 
 PrintD  PROC    NEAR
-        call    LIBPrintD      ;   Comment this out.  Insert your function here.
+        push    ax
+        push    bx
+        push    di
+        mov     ax, 18
+        mul     di
+        mov     bx, ax
+        mov     di, 5
+        xor     ah, ah
+Next:
+        mov     al, time[bx+di]
+        push    bx              ; begin conversion to ASCII and display
+        mov     bx, OFFSET buff
+        call    binasc
+        push    dx              ; begin display
+        mov     dx, bx
+        call    dspmsg
+        call    PrintSpace
+        pop     dx              ; end display
+        pop     bx              ; end conversion to ASCII and display
+        inc     di              ; do we loop back?
+        cmp     di, 14
+        jnz     Next
+        pop     di
+        pop     bx
+        pop     ax
         ret
 PrintD          ENDP
 
