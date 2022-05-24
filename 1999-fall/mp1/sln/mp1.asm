@@ -323,7 +323,32 @@ Next:
 PrintD          ENDP
 
 PrintT  PROC    NEAR
-        call    LIBPrintT      ;   Comment this out.  Insert your function here.
+        push    ax
+        push    bx
+        push    dx
+        push    di
+        mov     al, 18          ; Index into correct field
+        xor     ah, ah          ; .
+        mul     di              ; .
+        mov     di, ax          ; .
+        add     di, 14          ; .
+        mov     bx, OFFSET buff ; set buffer for binasc
+        mov     ax, WORD PTR time[di]
+        call    binasc
+        mov     dx, bx          ; set buffer for dspmsg
+        call    dspmsg
+        call    PrintSpace
+        call    PrintSpace
+        add     di, 2
+        mov     bx, OFFSET buff ; set buffer for binasc
+        mov     ax, WORD PTR time[di]
+        call    binasc
+        mov     dx, bx          ; set buffer for dspmsg
+        call    dspmsg
+        pop     di
+        pop     dx
+        pop     bx
+        pop     ax
         ret
 PrintT          ENDP
 
