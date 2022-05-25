@@ -266,7 +266,31 @@ CalcTP          ENDP
 
 
 HandleA PROC    NEAR
-        call    LIBHandleA     ;   Comment this out.  Insert your function here.
+        push    ax
+        push    dx
+        push    di
+        xor     ah, ah          ; zero out high byte for later mov di, ax
+Display:
+        mov     dx, OFFSET EmpMsg	; Note: Ent call modifies dx
+        call    dspmsg
+        call    kbdine
+        call    Ent
+        cmp     al, 30h
+        jb      InvalidIO
+        cmp     al, 39h
+        ja      InvalidIO
+        sub     al, 30h
+        mov     di, ax
+        call    PrintID
+        call    Ent
+        jmp     Done
+InvalidIO:
+        call    InvalidInput
+        jmp     Display
+Done:
+        pop     di
+        pop     dx
+        pop     ax
         ret
 HandleA         ENDP
 
