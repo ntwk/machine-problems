@@ -295,7 +295,37 @@ Done:
 HandleA         ENDP
 
 HandleB PROC    NEAR
-        call    LIBHandleB     ;   Comment this out.  Insert your function here.
+        push    ax
+        push    dx
+        push    di
+        xor     ah, ah          ; zero out high byte for later mov di, ax
+Display:
+        mov     dx, OFFSET EmpMsg       ; Note: Ent call modifies dx
+        call    dspmsg
+        call    kbdine
+        call    Ent
+        cmp     al, 30h
+        jb      InvalidIO
+        cmp     al, 39h
+        ja      InvalidIO
+        sub     al, 30h
+        mov     di, ax
+        call    PrintHdr2
+        call    PrintID
+        call    PrintSpace
+        mov     dx, OFFSET space[2] ; add an extra space to match LibHandleB
+        call    dspmsg              ; .
+        call    PrintT
+        call    Ent
+        call    Ent
+        jmp     Done
+InvalidIO:
+        call    InvalidInput
+        jmp     Display
+Done:
+        pop     di
+        pop     dx
+        pop     ax
         ret
 HandleB         ENDP
 
