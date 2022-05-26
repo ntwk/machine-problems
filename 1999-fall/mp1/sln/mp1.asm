@@ -265,40 +265,15 @@ NextDay:
 CalcTP          ENDP
 
 
-HandleA PROC    NEAR
-        push    ax
+;***************************************
+; Helper function to get Employee number
+;
+; Input: None
+;
+; Output: al contains employee number
+;***************************************
+GetEmp  PROC    NEAR
         push    dx
-        push    di
-        xor     ah, ah          ; zero out high byte for later mov di, ax
-Display:
-        mov     dx, OFFSET EmpMsg	; Note: Ent call modifies dx
-        call    dspmsg
-        call    kbdine
-        call    Ent
-        cmp     al, 30h
-        jb      InvalidIO
-        cmp     al, 39h
-        ja      InvalidIO
-        sub     al, 30h
-        mov     di, ax
-        call    PrintID
-        call    Ent
-        jmp     Done
-InvalidIO:
-        call    InvalidInput
-        jmp     Display
-Done:
-        pop     di
-        pop     dx
-        pop     ax
-        ret
-HandleA         ENDP
-
-HandleB PROC    NEAR
-        push    ax
-        push    dx
-        push    di
-        xor     ah, ah          ; zero out high byte for later mov di, ax
 Display:
         mov     dx, OFFSET EmpMsg       ; Note: Ent call modifies dx
         call    dspmsg
@@ -309,6 +284,35 @@ Display:
         cmp     al, 39h
         ja      InvalidIO
         sub     al, 30h
+        jmp     Done
+InvalidIO:
+        call    InvalidInput
+        jmp     Display
+Done:
+        pop     dx
+        ret
+GetEmp  ENDP
+
+HandleA PROC    NEAR
+        push    ax
+        push    di
+        xor     ah, ah          ; zero out high byte for later mov di, ax
+        call    GetEmp
+        mov     di, ax
+        call    PrintID
+        call    Ent
+Done:
+        pop     di
+        pop     ax
+        ret
+HandleA         ENDP
+
+HandleB PROC    NEAR
+        push    ax
+        push    dx
+        push    di
+        xor     ah, ah          ; zero out high byte for later mov di, ax
+        call    GetEmp
         mov     di, ax
         call    PrintHdr2
         call    PrintID
@@ -319,9 +323,6 @@ Display:
         call    Ent
         call    Ent
         jmp     Done
-InvalidIO:
-        call    InvalidInput
-        jmp     Display
 Done:
         pop     di
         pop     dx
