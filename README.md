@@ -1,3 +1,20 @@
+# Solutions to ECE 291/390 Machine Problem Archive
+
+This repository is a fork of https://github.com/ece291/machine-problems.  It
+aims to include a solution to each problem.  This project is for my own
+amusement and instruction.  Given the number of problems included in this
+archive, I don't know if I will ever complete them all.
+
+## Organization
+
+Each machine problem directory shall contain a subdirectory named 'sln' which
+contains the solution.  Each sln directoy shall include a file named
+'README.txt' which serves as a development log.  It should provide information
+on the development environment as well as instructions on how build the
+solution.
+
+The original README.md follows below.
+
 # ECE 291/390 Machine Problem Archive
 
 This repository contains as complete of an archive as can be reconstructed of
