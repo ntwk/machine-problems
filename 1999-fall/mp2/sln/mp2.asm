@@ -163,8 +163,88 @@ public errMsg6, errMsg7, errMsg8, errMsg9, errMsg10, errMsg11, errMsg12
 
 ;Comment your funcitons!!!
 Input proc near
-        call LibInput  ; comment this call out and replace it with your own code
-        ret
+     push    ax
+     push    bx
+     push    dx
+     push    si
+     push    di
+
+     ;; al = read character
+     ;; bx = base of accept array
+     ;; dl = character to display
+     ;; si = index into accept array
+     ;; di = next location in inputBuff
+
+     mov     bx, OFFSET accept          ; init pointer to accept array
+     mov     di, OFFSET inputBuff       ; init pointer to inputBuf array
+
+  getchar:
+     xor     si, si
+     call    kbdin
+
+  checkchar:
+     cmp     si, NUM_ACCEPT     ; are we at end of accept array?
+     je      badchar            ; if yes, char is not valid
+     cmp     al, [bx+si]
+     je      handlechar
+     inc     si
+     jmp     checkchar
+
+  badchar:
+     mov     dl, BEL
+     call    dspout
+     jmp     getchar
+
+  handlechar:
+     cmp     al, LF             ; handle line feed
+     je      getchar
+     cmp     al, ESCKEY         ; handle escape
+     jne     handlecr
+     stc
+     jmp     done
+
+  handlecr:
+     cmp     al, CR             ; handle carriage return
+     jne     handlebs
+     cmp     di, OFFSET inputBuff
+     jne     done
+     stc
+     jmp     done
+
+  handlebs:
+     cmp     al, BS                     ; handle backspace
+     jne     checkoverflow
+     cmp     di, OFFSET inputBuff       ; check for underflow
+     je      badchar
+     mov     dl, al                     ; backspace needs to erase preceding
+     call    dspout                     ; char with a SPACE character in
+     mov     dl, SPACE                  ; addition to moving the cursor
+     call    dspout                     ; backwards
+     mov     dl, al
+     call    dspout
+     dec     di                         ; move pointer backwards
+     mov     [di], '$'                  ; and terminate shortened string
+     jmp     getchar
+
+  checkoverflow:
+     cmp     di, OFFSET inputBuff + MAX_BUFF_LEN - 1    ; check for overflow
+     je      badchar
+
+  display:
+     mov     dl, al
+     call    dspout
+     mov     [di], al           ; put char in inputBuf
+     inc     di                 ; advance pointer
+     mov     [di], '$'          ; and terminate lengthened string
+     jmp     getchar
+
+  done:
+     pop     di
+     pop     si
+     pop     dx
+     pop     bx
+     pop     ax
+     ret
 Input endp
 
 ;Comment your code!!!
