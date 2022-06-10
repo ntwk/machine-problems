@@ -175,6 +175,9 @@ Input proc near
      ;; si = index into accept array
      ;; di = next location in inputBuff
 
+     mov     dx, OFFSET inputMsg        ; display prompt for equation
+     call    dspmsg
+
      mov     bx, OFFSET accept          ; init pointer to accept array
      mov     di, OFFSET inputBuff       ; init pointer to inputBuf array
 
