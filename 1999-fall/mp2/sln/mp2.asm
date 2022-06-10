@@ -207,9 +207,14 @@ Input proc near
      jmp     done
 
   handlecr:
-     cmp     al, CR             ; handle carriage return
+     cmp     al, CR                     ; handle carriage return
      jne     handlebs
-     cmp     di, OFFSET inputBuff
+     mov     dl, al                     ; input carriage return should output
+     call    dspout                     ; both a carriage return and a line
+     mov     dl, LF                     ; feed
+     call    dspout
+     mov     [di], '$'                  ; string is done, so terminate it
+     cmp     di, OFFSET inputBuff       ; handle empty string
      jne     done
      stc
      jmp     done
@@ -226,7 +231,6 @@ Input proc near
      mov     dl, al
      call    dspout
      dec     di                         ; move pointer backwards
-     mov     [di], '$'                  ; and terminate shortened string
      jmp     getchar
 
   checkoverflow:
@@ -238,7 +242,6 @@ Input proc near
      call    dspout
      mov     [di], al           ; put char in inputBuf
      inc     di                 ; advance pointer
-     mov     [di], '$'          ; and terminate lengthened string
      jmp     getchar
 
   done:
