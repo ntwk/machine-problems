@@ -186,9 +186,9 @@ Input proc near
      call    kbdin
 
   checkchar:
-     cmp     si, NUM_ACCEPT     ; are we at end of accept array?
-     je      badchar            ; if yes, char is not valid
-     cmp     al, [bx+si]
+     cmp     si, NUM_ACCEPT             ; are we at end of accept array?
+     je      badchar                    ; if yes, char is not valid
+     cmp     al, BYTE PTR [bx+si]
      je      handlechar
      inc     si
      jmp     checkchar
@@ -240,8 +240,8 @@ Input proc near
   display:
      mov     dl, al
      call    dspout
-     mov     [di], al           ; put char in inputBuf
-     inc     di                 ; advance pointer
+     mov     BYTE PTR [di], al           ; put char in inputBuf
+     inc     di                          ; advance pointer
      jmp     getchar
 
   done:
