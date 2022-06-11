@@ -213,7 +213,7 @@ Input proc near
      call    dspout                     ; both a carriage return and a line
      mov     dl, LF                     ; feed
      call    dspout
-     mov     [di], '$'                  ; string is done, so terminate it
+     mov     BYTE PTR [di], '$'         ; string is done, so terminate it
      cmp     di, OFFSET inputBuff       ; handle empty string
      jne     done
      stc
