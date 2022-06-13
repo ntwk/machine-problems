@@ -204,7 +204,7 @@ Input proc near
      cmp     al, ESCKEY         ; handle escape
      jne     handlecr
      stc
-     jmp     done
+     jmp     Input_done
 
   handlecr:
      cmp     al, CR                     ; handle carriage return
@@ -215,9 +215,9 @@ Input proc near
      call    dspout
      mov     BYTE PTR [di], '$'         ; string is done, so terminate it
      cmp     di, OFFSET inputBuff       ; handle empty string
-     jne     done
+     jne     Input_done
      stc
-     jmp     done
+     jmp     Input_done
 
   handlebs:
      cmp     al, BS                     ; handle backspace
@@ -244,7 +244,7 @@ Input proc near
      inc     di                          ; advance pointer
      jmp     getchar
 
-  done:
+  Input_done:
      pop     di
      pop     si
      pop     dx
@@ -255,8 +255,83 @@ Input endp
 
 ;Comment your code!!!
 CheckParens proc near
-        call LibCheckParens ; comment this call out and replace it with your own code
-        ret
+     push    dx
+     push    di
+     push    bp
+
+     ;; di = next location in inputBuff
+     ;; bp = stack frame
+
+     mov     bp, sp                     ; start a stack frame
+     mov     di, OFFSET inputBuff       ; move to start of inputBuff
+
+  checkterminator:
+     cmp     BYTE PTR [di], '$'         ; check for end of string
+     je      CheckParens_done
+
+  openparen:
+     cmp     BYTE PTR [di], '('         ; if char is an open paren push it
+     jne     closeparen                 ; onto the stack and advance to next
+     push    '('                        ; char
+     inc     di
+     jmp     checkterminator
+  closeparen:
+     cmp     BYTE PTR [di], ')'         ; if char is a close paren, first
+     jne     openbrace                  ; ensure stack is not empty, then pop
+     cmp     sp, bp                     ; char off stack and ensure parens
+     je      CheckParens_error          ; match, otherwise throw an error
+     pop     ax
+     cmp     al, '('
+     jne     CheckParens_error
+     inc     di                         ; if parens match advance to next char
+     jmp     checkterminator
+
+  openbrace:
+     cmp     BYTE PTR [di], '{'         ; if char is an open brace push it
+     jne     closebrace                 ; onto the stack and advance to next
+     push    '{'                        ; char
+     inc     di
+     jmp     checkterminator
+  closebrace:
+     cmp     BYTE PTR [di], '}'         ; if char is a close brace, first
+     jne     openbracket                ; ensure stack is not empty, then pop
+     cmp     sp, bp                     ; char off stack and ensure braces
+     je      CheckParens_error          ; match, otherwise throw an error
+     pop     ax
+     cmp     al, '{'
+     jne     CheckParens_error
+     inc     di                         ; if parens match advance to next char
+     jmp     checkterminator
+
+  openbracket:
+     cmp     BYTE PTR [di], '['         ; if char is an open bracket push it
+     jne     closebracket               ; onto the stack and advance to next
+     push    '['                        ; char
+     inc     di
+     jmp     checkterminator
+  closebracket:
+     cmp     BYTE PTR [di], ']'         ; if char is a close bracket, first
+     jne     nextchar                   ; ensure stack is not empty, then pop
+     cmp     sp, bp                     ; char off stack and ensure brackets
+     je      CheckParens_error          ; match, otherwise throw an error
+     pop     ax
+     cmp     al, '['
+     jne     CheckParens_error
+  nextchar:
+     inc     di                         ; if parens match advance to next char
+     jmp     checkterminator
+
+  CheckParens_error:
+     mov     dx, OFFSET errMsg1
+     call    dspmsg
+     stc
+
+  CheckParens_done:
+     mov     sp, bp
+     pop     bp
+     pop     di
+     pop     dx
+     ret
 CheckParens endp
 
 ;Comment loops in your code!!!
