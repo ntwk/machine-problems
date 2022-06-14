@@ -290,6 +290,7 @@ CheckParens proc near
      cmp     BYTE PTR [di], '{'         ; if char is an open brace push it
      jne     closebrace                 ; onto the stack and advance to next
      push    '{'                        ; char
+     mov     BYTE PTR [di], '('         ; convert '{' to '(' in inputBuff
      inc     di
      jmp     checkterminator
   closebrace:
@@ -300,6 +301,7 @@ CheckParens proc near
      pop     ax
      cmp     al, '{'
      jne     CheckParens_error
+     mov     BYTE PTR [di], ')'         ; convert '}' to ')' in inputBuff
      inc     di                         ; if parens match advance to next char
      jmp     checkterminator
 
@@ -307,6 +309,7 @@ CheckParens proc near
      cmp     BYTE PTR [di], '['         ; if char is an open bracket push it
      jne     closebracket               ; onto the stack and advance to next
      push    '['                        ; char
+     mov     BYTE PTR [di], '('         ; convert '[' to '(' in inputBuff
      inc     di
      jmp     checkterminator
   closebracket:
@@ -317,6 +320,7 @@ CheckParens proc near
      pop     ax
      cmp     al, '['
      jne     CheckParens_error
+     mov     BYTE PTR [di], ')'         ; convert ']' to ')' in inputBuff
   nextchar:
      inc     di                         ; if parens match advance to next char
      jmp     checkterminator
