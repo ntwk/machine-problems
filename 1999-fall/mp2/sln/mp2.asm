@@ -35,6 +35,9 @@ ENDNUM     EQU  110
 ENDSTR     EQU  36
 NEGATE     EQU  0C4h ; ascii for a hyphen
 
+; Definitions for parsing input Buff
+NUMWANTED  EQU  00h  ; code represents an expected number token
+
 PUBLIC BEL, BS, CR, LF, SPACE, ESCKEY
 PUBLIC MAX_BUFF_LEN, NUM_ACCEPT
 PUBLIC NULL, STARTNUM, ENDNUM, ENDSTR, NEGATE
@@ -265,7 +268,7 @@ CheckParens proc near
      mov     bp, sp                     ; start a stack frame
      mov     di, OFFSET inputBuff       ; move to start of inputBuff
 
-  checkterminator:
+  CheckParens_checkeos:
      cmp     BYTE PTR [di], '$'         ; check for end of string
      je      CheckParens_done
 
@@ -274,7 +277,7 @@ CheckParens proc near
      jne     closeparen                 ; onto the stack and advance to next
      push    '('                        ; char
      inc     di
-     jmp     checkterminator
+     jmp     CheckParens_checkeos
   closeparen:
      cmp     BYTE PTR [di], ')'         ; if char is a close paren, first
      jne     openbrace                  ; ensure stack is not empty, then pop
@@ -284,7 +287,7 @@ CheckParens proc near
      cmp     al, '('
      jne     CheckParens_error
      inc     di                         ; if parens match advance to next char
-     jmp     checkterminator
+     jmp     CheckParens_checkeos
 
   openbrace:
      cmp     BYTE PTR [di], '{'         ; if char is an open brace push it
@@ -292,7 +295,7 @@ CheckParens proc near
      push    '{'                        ; char
      mov     BYTE PTR [di], '('         ; convert '{' to '(' in inputBuff
      inc     di
-     jmp     checkterminator
+     jmp     CheckParens_checkeos
   closebrace:
      cmp     BYTE PTR [di], '}'         ; if char is a close brace, first
      jne     openbracket                ; ensure stack is not empty, then pop
@@ -303,7 +306,7 @@ CheckParens proc near
      jne     CheckParens_error
      mov     BYTE PTR [di], ')'         ; convert '}' to ')' in inputBuff
      inc     di                         ; if parens match advance to next char
-     jmp     checkterminator
+     jmp     CheckParens_checkeos
 
   openbracket:
      cmp     BYTE PTR [di], '['         ; if char is an open bracket push it
@@ -311,7 +314,7 @@ CheckParens proc near
      push    '['                        ; char
      mov     BYTE PTR [di], '('         ; convert '[' to '(' in inputBuff
      inc     di
-     jmp     checkterminator
+     jmp     CheckParens_checkeos
   closebracket:
      cmp     BYTE PTR [di], ']'         ; if char is a close bracket, first
      jne     nextchar                   ; ensure stack is not empty, then pop
@@ -323,7 +326,7 @@ CheckParens proc near
      mov     BYTE PTR [di], ')'         ; convert ']' to ')' in inputBuff
   nextchar:
      inc     di                         ; if parens match advance to next char
-     jmp     checkterminator
+     jmp     CheckParens_checkeos
 
   CheckParens_error:
      mov     dx, OFFSET errMsg1
@@ -340,8 +343,140 @@ CheckParens endp
 
 ;Comment loops in your code!!!
 Parse proc near
-        call LibParse
-        ret
+     push    ax
+     push    bx
+     push    dx
+     push    di
+
+     ;; ax = binary number result of ascbin procedure
+     ;; bx = next location in inputBuff
+     ;; dh = expected token, if dh == NUMWANTED, number expected
+     ;; di = next location in controlStr
+
+     mov     dh, NUMWANTED              ; begin by expecting a number
+     mov     bx, OFFSET inputBuff       ; move to start of inputBuff
+     mov     di, OFFSET controlStr      ; move to start of controlStr
+
+  Parse_checkeos:
+     cmp     BYTE PTR [bx], '$'         ; check for end of string
+     jne     checknumber
+     cmp     dh, NUMWANTED              ; string must end wanting an operator
+     je      errencounteredeos
+     mov     BYTE PTR [di], ENDSTR
+     jmp     Parse_done
+
+  checknumber:
+     cmp     BYTE PTR [bx], '0'
+     jb      checkminussign
+     cmp     BYTE PTR [bx], '9'
+     ja      checkminussign
+     cmp     dh, NUMWANTED              ; are we expecting a number?
+     jne     errencounterednum
+
+  convertnumber:
+     call    ascbin
+     cmp     dl, 0                      ; check for ascbin error
+     je      storenumber
+     cmp     dl, 6                      ; check for undocumented status code
+     je      storenumber
+     jmp     errinputoverflow
+
+  storenumber:
+     mov     BYTE PTR [di], STARTNUM
+     inc     di
+     mov     WORD PTR [di], ax
+     add     di, 2
+     mov     BYTE PTR [di], ENDNUM
+     inc     di
+     not     dh                         ; expect operator as next token
+     jmp     Parse_checkeos
+
+  checkminussign:
+     cmp     BYTE PTR [bx], '-'
+     jne     checkopenparen
+     cmp     dh, NUMWANTED
+     jne     placeoperator              ; is minus sign; add it to controlStr
+     cmp     BYTE PTR [bx+1], '$'       ; peek ahead...
+     je      errencounteredop           ; eos means '-' is an operator :(
+     cmp     BYTE PTR [bx+1], '('
+     je      insertnegate               ; '(' means it's a negate operator
+     cmp     BYTE PTR [bx+1], '-'
+     je      insertnegate               ; '-' means it's a negate operator
+     cmp     BYTE PTR [bx+1], '0'
+     jb      errencounteredop
+     cmp     BYTE PTR [bx+1], '9'
+     ja      errencounteredop
+     jmp     convertnumber
+
+  insertnegate:
+     mov     BYTE PTR [di], NEGATE	; add negate operator to controlStr
+     inc     bx
+     inc     di
+     jmp     Parse_checkeos
+
+  checkopenparen:
+     cmp     BYTE PTR [bx], '('
+     jne     checkcloseparen
+     mov     al, BYTE PTR [bx]
+     mov     BYTE PTR [di], al
+     inc     bx
+     inc     di
+     mov     dh, NUMWANTED              ; next token must be a number
+     jmp     Parse_checkeos
+
+  checkcloseparen:
+     cmp     BYTE PTR [bx], ')'
+     jne     checkspace
+     mov     al, BYTE PTR [bx]
+     mov     BYTE PTR [di], al
+     inc     bx
+     inc     di
+     mov     dh, 1                      ; next token must be an operator
+     jmp     Parse_checkeos
+
+  checkspace:
+     cmp     BYTE PTR [bx], SPACE
+     jne     handleoperator
+     inc     bx                         ; ignore space and move to next char
+     jmp     Parse_checkeos
+
+  handleoperator:
+     cmp     dh, NUMWANTED
+     je      errencounteredop
+
+  placeoperator:
+     mov     al, BYTE PTR [bx]          ; place operator into controlStr
+     mov     BYTE PTR [di], al
+     inc     bx
+     inc     di
+     mov     dh, NUMWANTED              ; next token must be a number
+     jmp     Parse_checkeos
+
+  errencounteredeos:
+     mov     dx, OFFSET errMsg8
+     jmp     Parse_error
+
+  errencounterednum:
+     mov     dx, OFFSET errMsg6
+     jmp     Parse_error
+
+  errinputoverflow:
+     mov     dx, OFFSET errMsg2
+     jmp     Parse_error
+
+  errencounteredop:
+     mov     dx, OFFSET errMsg7
+
+  Parse_error:
+     call    dspmsg
+     stc
+
+  Parse_done:
+     pop     di
+     pop     dx
+     pop     bx
+     pop     ax
+     ret
 parse endp
 
  
