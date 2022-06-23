@@ -431,6 +431,8 @@ Parse proc near
   checkcloseparen:
      cmp     BYTE PTR [bx], ')'
      jne     checkspace
+     cmp     dh, NUMWANTED		; invalid if a number is expected
+     je      errencounteredop
      mov     al, BYTE PTR [bx]
      mov     BYTE PTR [di], al
      inc     bx
