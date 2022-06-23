@@ -270,7 +270,7 @@ CheckParens proc near
 
   CheckParens_checkeos:
      cmp     BYTE PTR [di], '$'         ; check for end of string
-     je      CheckParens_done
+     je      cleanup
 
   openparen:
      cmp     BYTE PTR [di], '('         ; if char is an open paren push it
@@ -328,13 +328,17 @@ CheckParens proc near
      inc     di                         ; if parens match advance to next char
      jmp     CheckParens_checkeos
 
+  cleanup:
+     cmp     sp, bp                     ; confirm no dangling parens on stack
+     je      CheckParens_done
+
   CheckParens_error:
      mov     dx, OFFSET errMsg1
      call    dspmsg
+     mov     sp, bp                     ; pop the stack frame
      stc
 
   CheckParens_done:
-     mov     sp, bp
      pop     bp
      pop     di
      pop     dx
