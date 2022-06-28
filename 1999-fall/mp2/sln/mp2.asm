@@ -488,8 +488,71 @@ parse endp
  
 ;Comment the registers that are used as variables!!!
 CheckDone proc near
-        call LibCheckDone
-        ret
+     push    bx
+     push    cx
+
+     ;; bx = index into controlStr
+     ;; cl = count of number of operands
+     ;; ch = count of number of operators
+
+     ;; ERRORS CODES (FOR REFERENCE):
+     ;;
+     ;; 'Type 4 error: Missing operand',CR,LF,'$'
+     ;; 'Type 9 error: No numbers found in control string.',CR,LF,'$'
+
+     ;; ERRORS CONDITONS:
+     ;;
+     ;; - No operands in the control string.
+     ;; - Multiple operands but no operators in the control string.
+
+     mov     bx, OFFSET controlStr      ; initialize start of controlStr
+     xor     cx, cx                     ; init both counts to 0
+
+  CheckDone_checkeos:
+     cmp     BYTE PTR [bx], ENDSTR      ; check for end of string
+     je      CheckDone_checkoperands
+     cmp     BYTE PTR [bx], NULL        ; skip null characters
+     jne     CheckDone_checknum
+     inc     bx
+     jmp     CheckDone_checkeos
+
+  CheckDone_checknum:
+     cmp     BYTE PTR [bx], STARTNUM
+     jne     count_operator
+     inc     cl
+     add     bx, 4                      ; advance to next token
+     jmp     CheckDone_checkeos
+
+  count_operator:
+     inc     ch
+     inc     bx
+     jmp     CheckDone_checkeos
+
+  CheckDone_checkoperands:
+     cmp     ch, 0
+     jne     notdone
+     cmp     cl, 1
+     je      CheckDone_return           ; fully simplified, ZF is set
+     ja      errmultiplenumbers         ; jump if above or else fall through
+  errnonumbers:                         ; to errnonumbers.
+     mov     dx, OFFSET errMsg9
+     jmp     errdisplay
+
+  errmultiplenumbers:
+     mov     dx, OFFSET errMsg4
+
+  errdisplay:
+     call    dspmsg
+     stc
+     jmp     CheckDone_return
+
+  notdone:
+     test    bx, bx                     ; set ZF = 0
+
+  CheckDone_return:
+     pop     cx
+     pop     bx
+     ret
 CheckDone endp
 
 
