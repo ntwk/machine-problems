@@ -551,8 +551,41 @@ CheckDone endp
 
 ;Comment code that is confusing!!! 
 FindInner proc near
-        call LibFindInner
-        ret
+     ;; bx = index of the innermost open parentheses
+     ;; si = bx + si index of matching closed parentheses
+
+     ;; note: FindInner will return si == -1 on empty control string.
+
+     xor     bx, bx
+     xor     si, si
+
+  FindInner_checkeos:
+     cmp     BYTE PTR controlStr[bx][si], ENDSTR
+     jne     FindInner_checknum
+     dec     si
+     jmp     FindInner_return
+
+  FindInner_checknum:
+     cmp     BYTE PTR controlStr[bx][si], STARTNUM
+     jne     FindInner_checkopenparen
+     add     si, 4
+     jmp     FindInner_checkeos
+
+  FindInner_checkopenparen:
+     cmp     BYTE PTR controlStr[bx][si], '('
+     jne     FindInner_checkcloseparen
+     add     bx, si
+     mov     si, 1
+     jmp     FindInner_checkeos
+
+  FindInner_checkcloseparen:
+     cmp     BYTE PTR controlStr[bx][si], ')'
+     je      FindInner_return
+     inc     si                                 ; advance to next char
+     jmp     FindInner_checkeos
+
+  FindInner_return:
+     ret
 FindInner endp
 
 ;Don't write a comment for every line!!!
