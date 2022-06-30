@@ -590,8 +590,68 @@ FindInner endp
 
 ;Don't write a comment for every line!!!
 FindOne proc near
-        call LibFindOne
-        ret
+     push    ax
+     push    bx
+     push    cx
+     push    dx
+     push    si
+
+     ;; Inputs:
+     ;; bx = index in controlStr of the start of the substring to search
+     ;; si = number of characters in controlStr to search minus 1
+
+     ;; Outputs:
+     ;; di = index in controlStr of highest precedence operator in substring
+     ;; cf = 1 if error, 0 otherwise
+
+     ;; al = temporary copy of controlStr[bx]
+     ;; cx = index of last character in substring (bx + si)
+     ;; dl = highest priority seen so far
+
+     xor     ah, ah                     ; zero out high bits of ax
+     mov     cx, bx
+     add     cx, si
+     xor     dl, dl                     ; init highest priority to 0
+
+  FindOne_checkchar:
+     cmp     bx, cx
+     ja      checkerror
+     cmp     BYTE PTR controlStr[bx], STARTNUM
+     jne     getpriority
+     add     bx, 4
+     jmp     FindOne_checkchar
+
+  getpriority:
+     mov     al, controlStr[bx]
+     mov     si, ax
+     cmp     priority[si], dl
+     ja      isgreater
+     inc     bx
+     jmp     FindOne_checkchar
+
+  isgreater:
+     mov     dl, priority[si]
+     test    dl, 1                      ; is priority even or odd?
+     jz      iseven
+     dec     dl                         ; decrement priority to enforce right
+  iseven:                               ; to left associativity
+     mov     di, bx
+     inc     bx
+     jmp     FindOne_checkchar
+
+  checkerror:
+     cmp     dl, 0                      ; if still -1, no operator was found
+     jne     FindOne_return
+     mov     dx, OFFSET errMsg4
+     call    dspmsg
+     stc
+  FindOne_return:
+     pop     si
+     pop     dx
+     pop     cx
+     pop     bx
+     pop     ax
+     ret
 FindOne endp
 
 ;Don't write paragraphs of comments!!!
