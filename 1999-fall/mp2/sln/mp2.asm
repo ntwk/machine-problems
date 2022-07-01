@@ -640,7 +640,7 @@ FindOne proc near
      jmp     FindOne_checkchar
 
   checkerror:
-     cmp     dl, 0                      ; if still -1, no operator was found
+     cmp     dl, 0                      ; if still 0, no operator was found
      jne     FindOne_return
      mov     dx, OFFSET errMsg4
      call    dspmsg
