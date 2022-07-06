@@ -142,6 +142,25 @@ priority db 33 dup (0) ; control characters
          db 17         ; Long dash for negate
          db 59 dup (0) ; the rest of the extended characters
 
+; A jump table of the supported operations
+operate  dw 37 dup (errnosuchop)  ; control characters, etc.
+         dw modulo                ; %
+         dw errnosuchop           ; &
+         dw errnosuchop           ; '
+         dw parenopen             ; (
+         dw parenclose            ; )
+         dw multiply              ; *
+         dw addition              ; +
+         dw errnosuchop           ; ,
+         dw subtract              ; -
+         dw errnosuchop           ; .
+         dw divide                ; /
+         dw 12 dup (errnosuchop)  ; digits, etc.
+         dw shiftleft             ; <
+         dw errnosuchop           ; =
+         dw shiftright            ; >
+         dw 193 dup (errnosuchop) ; remaining characters
+
 errMsg   db BEL,'The equation was not fully simplified due to an error.',CR,LF,'$'
 errMsg0  db BEL,'Type 0 error: Divide by zero.',CR,LF,'$'
 errMsg1  db BEL,'Type 1 error: Parenthesis mismatch.',CR,LF,'$'
@@ -273,13 +292,13 @@ CheckParens proc near
      cmp     BYTE PTR [di], '$'         ; check for end of string
      je      cleanup
 
-  openparen:
+  Input_openparen:
      cmp     BYTE PTR [di], '('         ; if char is an open paren push it
-     jne     closeparen                 ; onto the stack and advance to next
+     jne     Input_closeparen           ; onto the stack and advance to next
      push    '('                        ; char
      inc     di
      jmp     CheckParens_checkeos
-  closeparen:
+  Input_closeparen:
      cmp     BYTE PTR [di], ')'         ; if char is a close paren, first
      jne     openbrace                  ; ensure stack is not empty, then pop
      cmp     sp, bp                     ; char off stack and ensure parens
@@ -669,8 +688,59 @@ FindOne endp
 
 ;Don't write paragraphs of comments!!!
 SolveOne proc near
-        call LibSolveOne
-        ret
+     push    ax
+     push    cx
+     push    dx
+     push    bp
+
+     ;; ax = result or operand
+     ;; cx = counter for loop operations
+     ;; dx = result or operand
+     ;; bp = temporary copy of di and output of GetOp1 and GetOp2
+
+     xor     ah, ah                             ; mov byte -> ax -> bp
+     mov     al, controlStr[di]
+     mov     bp, ax
+     shl     bp, 1                              ; scale offset to word size
+     mov     controlStr[di], NULL               ; null out operator
+     jmp     operate[bp]                        ; refer to jump table
+
+  modulo:
+     call    GetOp1
+     jc      SolveOne_return                    ; check for error
+     mov     ax, WORD PTR controlStr[bp+1]      ; move to low word of dividend
+     xor     dx, dx                             ; zero high word of dividend
+     mov     cx, 4
+  modulo_insertnull:
+     mov     BYTE PTR controlStr[bp], NULL
+     inc     bp
+     loop    modulo_insertnull
+     call    GetOp2
+     jc      SolveOne_return                    ; check for error
+     div     WORD PTR controlStr[bp+1]
+     mov     WORD PTR controlStr[bp+1], dx      ; store remainder
+     jmp     SolveOne_return
+
+  parenopen:
+  parenclose:
+  multiply:
+  addition:
+  subtract:
+  divide:
+  shiftleft:
+  shiftright:
+
+  errnosuchop:
+     mov     dx, OFFSET errMsg10
+     call    dspmsg
+     stc
+
+  SolveOne_return:
+     pop     bp
+     pop     dx
+     pop     cx
+     pop     ax
+     ret
 SolveOne endp
 
 ;Write your comments well!!!
