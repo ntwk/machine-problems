@@ -723,7 +723,24 @@ SolveOne proc near
 
   parenopen:
   parenclose:
+     jmp     errnosuchop
+
   multiply:
+     call    GetOp1
+     jc      SolveOne_return                    ; check for error
+     mov     ax, WORD PTR controlStr[bp+1]      ; move to low word of dividend
+     mov     cx, 4
+  multiply_insertnull:
+     mov     BYTE PTR controlStr[bp], NULL
+     inc     bp
+     loop    multiply_insertnull
+     call    GetOp2
+     jc      SolveOne_return                    ; check for error
+     imul    WORD PTR controlStr[bp+1]
+     jc      errcalcoverflow                    ; check for overflow
+     mov     WORD PTR controlStr[bp+1], ax      ; store lower half of product
+     jmp     SolveOne_return
+
   addition:
   subtract:
   divide:
@@ -732,6 +749,12 @@ SolveOne proc near
 
   errnosuchop:
      mov     dx, OFFSET errMsg10
+     call    dspmsg
+     stc
+     jmp     SolveOne_return
+
+  errcalcoverflow:
+     mov     dx, OFFSET errMsg3
      call    dspmsg
      stc
 
