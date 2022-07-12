@@ -148,7 +148,7 @@ operate  dw 37 dup (errnosuchop)  ; control characters, etc.
          dw errnosuchop           ; &
          dw errnosuchop           ; '
          dw parenopen             ; (
-         dw parenclose            ; )
+         dw errnosuchop           ; )
          dw multiply              ; *
          dw addition              ; +
          dw errnosuchop           ; ,
@@ -722,8 +722,24 @@ SolveOne proc near
      jmp     SolveOne_return
 
   parenopen:
+     test    di, di                             ; is open paren at start of
+     jz      parenopenputnull                   ; controlStr?
+     cmp     BYTE PTR controlStr[di-1], ENDNUM  ; is open paren preceded by a
+     jne     parenopenputnull                   ; number?
+     mov     BYTE PTR controlStr[di], '*'       ; if so, multiply
+     jmp     parenclose
+  parenopenputnull:
+     mov     BYTE PTR controlStr[di], NULL
   parenclose:
-     jmp     errnosuchop
+     cmp     BYTE PTR controlStr[bx+si+1], '$'  ; is close paren @ string end?
+     je      parencloseputnull
+     cmp     BYTE PTR controlStr[bx+si+1], STARTNUM  ; is close paren followed
+     jne     parencloseputnull                       ; by a number?
+     mov     BYTE PTR controlStr[bx+si], '*'         ; if so, multiply
+     jmp     SolveOne_return
+  parencloseputnull:
+     mov     BYTE PTR controlStr[bx+si], NULL
+     jmp     SolveOne_return
 
   multiply:
      call    GetOp1
