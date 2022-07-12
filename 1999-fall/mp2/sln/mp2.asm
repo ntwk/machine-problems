@@ -412,7 +412,7 @@ Parse proc near
      jb      minusisminus
      cmp     BYTE PTR [bx+1], '9'
      ja      minusisminus
-     jmp     insertnegate               ; digit means it's a negate operator
+     jmp     convertnumber              ; is negative number; convert & store
 
   insertnegate:
      mov     BYTE PTR [di], NEGATE      ; add negate operator to controlStr
