@@ -36,7 +36,8 @@ ENDSTR     EQU  36
 NEGATE     EQU  0C4h ; ascii for a hyphen
 
 ; Definitions for parsing input Buff
-NUMWANTED  EQU  00h  ; code represents an expected number token
+NUMTOKEN  EQU  00000001b  ; accept number token
+OPRTOKEN  EQU  00000010b  ; accept operator token
 
 PUBLIC BEL, BS, CR, LF, SPACE, ESCKEY
 PUBLIC MAX_BUFF_LEN, NUM_ACCEPT
@@ -354,18 +355,21 @@ Parse proc near
 
      ;; ax = binary number result of ascbin procedure
      ;; bx = next location in inputBuff
-     ;; dh = expected token, if dh == NUMWANTED, number expected
+     ;; dh = bitfield of acceptable tokens types for next token
+     ;;      bit 0: accept number
+     ;;      bit 1: accept operator
+     ;; dl = ascbin procedure return code
      ;; di = next location in controlStr
 
-     mov     dh, NUMWANTED              ; begin by expecting a number
+     mov     dh, NUMTOKEN               ; begin by expecting a number
      mov     bx, OFFSET inputBuff       ; move to start of inputBuff
      mov     di, OFFSET controlStr      ; move to start of controlStr
 
   Parse_checkeos:
      cmp     BYTE PTR [bx], '$'         ; check for end of string
      jne     checknumber
-     cmp     dh, NUMWANTED              ; string must end wanting an operator
-     je      errencounteredeos
+     test    dh, OPRTOKEN               ; string must end wanting an operator
+     jz      errencounteredeos
      mov     BYTE PTR [di], ENDSTR
      jmp     Parse_done
 
@@ -374,8 +378,8 @@ Parse proc near
      jb      checkminussign
      cmp     BYTE PTR [bx], '9'
      ja      checkminussign
-     cmp     dh, NUMWANTED              ; are we expecting a number?
-     jne     errencounterednum
+     test    dh, NUMTOKEN               ; are we expecting a number?
+     jz      errencounterednum
 
   convertnumber:
      call    ascbin
@@ -392,31 +396,34 @@ Parse proc near
      add     di, 2
      mov     BYTE PTR [di], ENDNUM
      inc     di
-     not     dh                         ; expect operator as next token
+     mov     dh, OPRTOKEN               ; expect operator as next token
      jmp     Parse_checkeos
 
   checkminussign:
      cmp     BYTE PTR [bx], '-'
      jne     checkopenparen
-     cmp     dh, NUMWANTED
-     jne     placeoperator              ; is minus sign; add it to controlStr
-     cmp     BYTE PTR [bx+1], '$'       ; peek ahead...
-     je      errencounteredop           ; eos means '-' is an operator :(
+     test    dh, NUMTOKEN               ; is a number acceptable?
+     jz      placeoperator              ; is minus sign; add it to controlStr
      cmp     BYTE PTR [bx+1], '('
      je      insertnegate               ; '(' means it's a negate operator
      cmp     BYTE PTR [bx+1], '-'
      je      insertnegate               ; '-' means it's a negate operator
      cmp     BYTE PTR [bx+1], '0'
-     jb      errencounteredop
+     jb      minusisminus
      cmp     BYTE PTR [bx+1], '9'
-     ja      errencounteredop
-     jmp     convertnumber
+     ja      minusisminus
+     jmp     insertnegate               ; digit means it's a negate operator
 
   insertnegate:
-     mov     BYTE PTR [di], NEGATE	; add negate operator to controlStr
+     mov     BYTE PTR [di], NEGATE      ; add negate operator to controlStr
      inc     bx
      inc     di
      jmp     Parse_checkeos
+
+  minusisminus:
+     test    dh, OPRTOKEN               ; is an operator _also_ acceptable?
+     jz      errencounteredop           ; only a number is acceptable
+     jmp     placeoperator
 
   checkopenparen:
      cmp     BYTE PTR [bx], '('
@@ -425,19 +432,19 @@ Parse proc near
      mov     BYTE PTR [di], al
      inc     bx
      inc     di
-     mov     dh, NUMWANTED              ; next token must be a number
+     mov     dh, NUMTOKEN               ; next token must be a number
      jmp     Parse_checkeos
 
   checkcloseparen:
      cmp     BYTE PTR [bx], ')'
      jne     checkspace
-     cmp     dh, NUMWANTED		; invalid if a number is expected
-     je      errencounteredop
+     test    dh, OPRTOKEN               ; only valid if operator is expected
+     jz      errencounteredop
      mov     al, BYTE PTR [bx]
      mov     BYTE PTR [di], al
      inc     bx
      inc     di
-     mov     dh, 1                      ; next token must be an operator
+     mov     dh, OPRTOKEN OR NUMTOKEN   ; next token can be anything
      jmp     Parse_checkeos
 
   checkspace:
@@ -447,15 +454,15 @@ Parse proc near
      jmp     Parse_checkeos
 
   handleoperator:
-     cmp     dh, NUMWANTED
-     je      errencounteredop
+     test    dh, OPRTOKEN               ; only valid if operator is expected
+     jz      errencounteredop
 
   placeoperator:
      mov     al, BYTE PTR [bx]          ; place operator into controlStr
      mov     BYTE PTR [di], al
      inc     bx
      inc     di
-     mov     dh, NUMWANTED              ; next token must be a number
+     mov     dh, NUMTOKEN               ; next token must be a number
      jmp     Parse_checkeos
 
   errencounteredeos:
