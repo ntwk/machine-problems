@@ -748,7 +748,7 @@ SolveOne proc near
   multiply:
      call    GetOp1
      jc      SolveOne_return                    ; check for error
-     mov     ax, WORD PTR controlStr[bp+1]      ; move to low word of dividend
+     mov     ax, WORD PTR controlStr[bp+1]      ; Op1 is multiplicand
      mov     cx, 4
   multiply_insertnull:
      mov     BYTE PTR controlStr[bp], NULL
