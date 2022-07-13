@@ -788,9 +788,9 @@ SolveOne proc near
   negation:
      call    GetOp2
      jc      SolveOne_return                    ; check for error
-     not     WORD PTR controlStr[bp+1]
-     inc     WORD PTR controlStr[bp+1]
-     jmp     SolveOne_return
+     neg     WORD PTR controlStr[bp+1]
+     clc                                        ; reset carry to prevent a
+     jmp     SolveOne_return                    ; false error
 
   errnosuchop:
      mov     dx, OFFSET errMsg10
