@@ -721,6 +721,10 @@ SolveOne proc near
      mov     WORD PTR controlStr[bp+1], dx      ; store remainder
      jmp     SolveOne_return
 
+  ;; WARNING: as we are implementing implicit multiplication, when
+  ;; peeking the preceding or following token, unary operators should
+  ;; be considered as being part of a number.
+
   parenopen:
      test    di, di                             ; is open paren at start of
      jz      parenopenputnull                   ; controlStr?
@@ -734,11 +738,14 @@ SolveOne proc near
      cmp     BYTE PTR controlStr[bx+si+1], '$'  ; is close paren @ string end?
      je      parencloseputnull
      cmp     BYTE PTR controlStr[bx+si+1], STARTNUM  ; is close paren followed
-     jne     parencloseputnull                       ; by a number?
-     mov     BYTE PTR controlStr[bx+si], '*'         ; if so, multiply
-     jmp     SolveOne_return
+     je      parenclosemultiply                      ; by a number?
+     cmp     BYTE PTR controlStr[bx+si+1], NEGATE
+     je      parenclosemultiply
   parencloseputnull:
-     mov     BYTE PTR controlStr[bx+si], NULL
+     mov     BYTE PTR controlStr[bx+si], NULL        ; if not, put NULL
+     jmp     SolveOne_return
+  parenclosemultiply:
+     mov     BYTE PTR controlStr[bx+si], '*'         ; if so, multiply
      jmp     SolveOne_return
 
   multiply:
