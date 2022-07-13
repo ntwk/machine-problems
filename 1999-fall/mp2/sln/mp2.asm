@@ -764,6 +764,21 @@ SolveOne proc near
      jmp     SolveOne_return
 
   addition:
+     call    GetOp1
+     jc      SolveOne_return                    ; check for error
+     mov     ax, WORD PTR controlStr[bp+1]
+     mov     cx, 4
+  addition_insertnull:
+     mov     BYTE PTR controlStr[bp], NULL
+     inc     bp
+     loop    addition_insertnull
+     call    GetOp2
+     jc      SolveOne_return                    ; check for error
+     add     ax, WORD PTR controlStr[bp+1]
+     jo      errcalcoverflow                    ; check for overflow
+     mov     WORD PTR controlStr[bp+1], ax      ; store the result
+     jmp     SolveOne_return
+
   subtract:
   divide:
   shiftleft:
