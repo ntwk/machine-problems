@@ -350,11 +350,13 @@ CheckParens endp
 Parse proc near
      push    ax
      push    bx
+     push    cx
      push    dx
      push    di
 
      ;; ax = binary number result of ascbin procedure
      ;; bx = next location in inputBuff
+     ;; cl = copy of char pointed to by bx before ascbin is called
      ;; dh = bitfield of acceptable tokens types for next token
      ;;      bit 0: accept number
      ;;      bit 1: accept operator
@@ -382,12 +384,15 @@ Parse proc near
      jz      errencounterednum
 
   convertnumber:
+     mov     cl, BYTE PTR [bx]          ; save copy of first char of number
      call    ascbin
      cmp     dl, 0                      ; check for ascbin error
      je      storenumber
      cmp     dl, 6                      ; check for undocumented status code
-     je      storenumber
-     jmp     errinputoverflow
+     jne     errinputoverflow
+     cmp     cl, '-'                    ; if code 6 and number started with
+     jne     storenumber                ; a minus sign, negate its value
+     neg     ax
 
   storenumber:
      mov     BYTE PTR [di], STARTNUM
@@ -487,6 +492,7 @@ Parse proc near
   Parse_done:
      pop     di
      pop     dx
+     pop     cx
      pop     bx
      pop     ax
      ret
