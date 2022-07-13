@@ -159,7 +159,9 @@ operate  dw 37 dup (errnosuchop)  ; control characters, etc.
          dw shiftleft             ; <
          dw errnosuchop           ; =
          dw shiftright            ; >
-         dw 193 dup (errnosuchop) ; remaining characters
+         dw 133 dup (errnosuchop) ; intermediate characters
+         dw negation              ; long dash for negate
+         dw 59 dup (errnosuchop)  ; remaining characters
 
 errMsg   db BEL,'The equation was not fully simplified due to an error.',CR,LF,'$'
 errMsg0  db BEL,'Type 0 error: Divide by zero.',CR,LF,'$'
@@ -766,6 +768,14 @@ SolveOne proc near
   divide:
   shiftleft:
   shiftright:
+     jmp     errnosuchop
+
+  negation:
+     call    GetOp2
+     jc      SolveOne_return                    ; check for error
+     not     WORD PTR controlStr[bp+1]
+     inc     WORD PTR controlStr[bp+1]
+     jmp     SolveOne_return
 
   errnosuchop:
      mov     dx, OFFSET errMsg10
