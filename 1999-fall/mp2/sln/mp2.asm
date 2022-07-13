@@ -727,13 +727,10 @@ SolveOne proc near
 
   parenopen:
      test    di, di                             ; is open paren at start of
-     jz      parenopenputnull                   ; controlStr?
+     jz      parenclose                         ; controlStr?
      cmp     BYTE PTR controlStr[di-1], ENDNUM  ; is open paren preceded by a
-     jne     parenopenputnull                   ; number?
+     jne     parenclose                         ; number?
      mov     BYTE PTR controlStr[di], '*'       ; if so, multiply
-     jmp     parenclose
-  parenopenputnull:
-     mov     BYTE PTR controlStr[di], NULL
   parenclose:
      cmp     BYTE PTR controlStr[bx+si+1], '$'  ; is close paren @ string end?
      je      parencloseputnull
