@@ -814,6 +814,38 @@ SolveOne proc near
      jmp     SolveOne_return
 
   shiftleft:
+     call    GetOp1
+     jc      SolveOne_return                    ; check for error
+     mov     ax, WORD PTR controlStr[bp+1]
+     mov     cx, 4
+  shiftleft_insertnull:
+     mov     BYTE PTR controlStr[bp], NULL
+     inc     bp
+     loop    shiftleft_insertnull
+     call    GetOp2
+     jc      SolveOne_return                    ; check for error
+     mov     cx, WORD PTR controlStr[bp+1]
+     test    cx, cx
+     jns     shiftleft_nonegate
+     neg     cx
+     cmp     cx, 16
+     jbe     shiftleft_negate_sub16
+     mov     WORD PTR controlStr[bp+1], 0       ; store zero as result
+     jmp     SolveOne_return
+  shiftleft_negate_sub16:
+     shr     ax, cl
+     mov     WORD PTR controlStr[bp+1], ax      ; store the result
+     jmp     SolveOne_return
+  shiftleft_nonegate:
+     cmp     cx, 16
+     jbe     shiftleft_nonegate_sub16
+     mov     WORD PTR controlStr[bp+1], 0       ; store zero as result
+     jmp     SolveOne_return
+  shiftleft_nonegate_sub16:
+     shl     ax, cl
+     mov     WORD PTR controlStr[bp+1], ax      ; store the result
+     jmp     SolveOne_return
+
   shiftright:
      jmp     errnosuchop
 
