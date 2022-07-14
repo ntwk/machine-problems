@@ -742,10 +742,12 @@ SolveOne proc near
      je      parenclosemultiply
   parencloseputnull:
      mov     BYTE PTR controlStr[bx+si], NULL        ; if not, put NULL
-     jmp     SolveOne_return
+     clc                                             ; clear cary to avoid
+     jmp     SolveOne_return                         ; false error
   parenclosemultiply:
      mov     BYTE PTR controlStr[bx+si], '*'         ; if so, multiply
-     jmp     SolveOne_return
+     clc                                             ; clear cary to avoid
+     jmp     SolveOne_return                         ; false error
 
   multiply:
      call    GetOp1
