@@ -834,6 +834,7 @@ SolveOne proc near
      jmp     SolveOne_return
   shiftleft_negate_sub16:
      shr     ax, cl
+     clc                                        ; avoid potential false error
      mov     WORD PTR controlStr[bp+1], ax      ; store the result
      jmp     SolveOne_return
   shiftleft_nonegate:
@@ -843,6 +844,7 @@ SolveOne proc near
      jmp     SolveOne_return
   shiftleft_nonegate_sub16:
      shl     ax, cl
+     clc                                        ; avoid potential false error
      mov     WORD PTR controlStr[bp+1], ax      ; store the result
      jmp     SolveOne_return
 
