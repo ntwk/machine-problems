@@ -951,8 +951,23 @@ GetOp1 endp
  
 ;When you duplicate code, don't duplicate commentes!!! 
 GetOp2 proc near
-        call LibGetOp2
-        ret
+     cmp     di, si
+     jz      GetOp2_errnoopfound
+     mov     bp, di
+  GetOp2_nextchar:
+     inc     bp
+     cmp     controlStr[bp], NULL
+     jz      GetOp2_nextchar
+     cmp     controlStr[bp], STARTNUM
+     jz      GetOp2_return
+
+  GetOp2_errnoopfound:
+     mov     dx, OFFSET errMsg4
+     call    dspmsg
+     stc
+
+  GetOp2_return:
+     ret
 GetOp2 endp 
 
 
