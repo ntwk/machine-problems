@@ -700,6 +700,13 @@ SolveOne proc near
      ;; dx = result or operand
      ;; bp = temporary copy of di and output of GetOp1 and GetOp2
 
+     ;; Inputs:
+     ;; di = an index in controlStr pointing to the operation to perform
+     ;; bx = an index in controlStr pointing to the start of the substring
+     ;;      containing the operator
+     ;; si = the number of bytes of the substring containing the operator
+     ;;      minus 1
+
      xor     ah, ah                             ; mov byte -> ax -> bp
      mov     al, controlStr[di]
      mov     bp, ax
