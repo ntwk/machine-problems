@@ -815,6 +815,9 @@ SolveOne proc near
      loop    divide_insertnull
      call    GetOp2
      jc      SolveOne_return                    ; check for error
+     mov     cx, WORD PTR controlStr[bp+1]      ; check for zero divisor
+     test    cx, cx
+     jz      errdivbyzero
      cwd                                        ; sign-extend ax to dx:ax
      idiv    WORD PTR controlStr[bp+1]
      mov     WORD PTR controlStr[bp+1], ax      ; store the result
@@ -905,6 +908,12 @@ SolveOne proc near
 
   errcalcoverflow:
      mov     dx, OFFSET errMsg3
+     call    dspmsg
+     stc
+     jmp     SolveOne_return
+
+  errdivbyzero:
+     mov     dx, OFFSET errMsg0
      call    dspmsg
      stc
 
