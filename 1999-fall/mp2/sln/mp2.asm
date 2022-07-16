@@ -927,8 +927,25 @@ SolveOne endp
 
 ;Write your comments well!!!
 GetOp1 proc near
-        call LibGetOp1
-        ret
+     cmp     di, bx                     ; if operator is at start of substring
+     jz      GetOp1_errnoopfound        ; raise an error
+     mov     bp, di
+  GetOp1_nextchar:
+     dec     bp
+     cmp     controlStr[bp], NULL       ; skip any NULL characters
+     jz      GetOp1_nextchar
+     cmp     controlStr[bp], ENDNUM     ; look for ENDNUM
+     jnz     GetOp1_errnoopfound
+     sub     bp, 3                      ; move bp to STARTNUM
+     jmp     GetOp1_return
+
+  GetOp1_errnoopfound:
+     mov     dx, OFFSET errMsg4
+     call    dspmsg
+     stc
+
+  GetOp1_return:
+     ret
 GetOp1 endp
 
  
